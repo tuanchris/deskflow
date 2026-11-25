@@ -8,10 +8,15 @@
 
 #include "common/Settings.h"
 #include "deskflow/Clipboard.h"
-#include "deskflow/ClipboardFileList.h"
 
 #include <QFile>
 #include <QTemporaryDir>
+
+// Regression guard: <Windows.h> without NOMINMAX defines min/max as macros after Qt has
+// undefined them, and Windows converters include this header in that state.
+#define min(a, b) (((a) < (b)) ? (a) : (b))
+#include "deskflow/ClipboardFileList.h"
+#undef min
 
 using namespace deskflow::clipboard;
 using Paths = std::vector<std::string>;

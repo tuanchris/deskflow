@@ -8,7 +8,6 @@
 
 #include <QStringList>
 
-#include <algorithm>
 #include <string>
 #include <string_view>
 #include <vector>
@@ -34,7 +33,8 @@ inline std::vector<std::string> splitFileList(std::string_view payload)
   std::vector<std::string> paths;
   size_t start = 0;
   while (start <= payload.size()) {
-    const auto end = std::min(payload.find('\0', start), payload.size());
+    const auto found = payload.find('\0', start);
+    const auto end = found == std::string_view::npos ? payload.size() : found;
     if (end > start)
       paths.emplace_back(payload.substr(start, end - start));
     start = end + 1;
