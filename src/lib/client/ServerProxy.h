@@ -8,6 +8,7 @@
 
 #pragma once
 
+#include "client/ShortcutMap.h"
 #include "common/Enums.h"
 #include "deskflow/ClipboardChunk.h"
 #include "deskflow/ClipboardTypes.h"
@@ -126,6 +127,7 @@ private:
   bool m_ignoreMouse = false;
 
   KeyModifierID m_modifierTranslationTable[kKeyModifierIDLast];
+  ShortcutMap m_shortcuts;
 
   double m_keepAliveAlarm = 0.0;
   EventQueueTimer *m_keepAliveAlarmTimer = nullptr;

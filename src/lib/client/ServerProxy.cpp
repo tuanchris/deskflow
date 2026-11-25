@@ -11,6 +11,7 @@
 #include "base/IEventQueue.h"
 #include "base/Log.h"
 #include "client/Client.h"
+#include "common/Settings.h"
 #include "deskflow/Clipboard.h"
 #include "deskflow/ClipboardChunk.h"
 #include "deskflow/DeskflowException.h"
@@ -29,7 +30,8 @@
 ServerProxy::ServerProxy(Client *client, deskflow::IStream *stream, IEventQueue *events)
     : m_client(client),
       m_stream(stream),
-      m_events(events)
+      m_events(events),
+      m_shortcuts(Settings::value(Settings::Core::ShortcutMappings).toStringList())
 {
   assert(m_client != nullptr);
   assert(m_stream != nullptr);
@@ -578,6 +580,13 @@ void ServerProxy::keyDown(uint16_t id, uint16_t mask, uint16_t button, const std
 {
   flushCompressedMouse();
 
+  // Shortcut rules are written in the server's terms, so match before the modifier remap.
+  if (const auto hit = m_shortcuts.match(static_cast<KeyID>(id), static_cast<KeyModifierMask>(mask))) {
+    LOG_DEBUG("shortcut translated to id=0x%08x, mask=0x%04x", hit->id, hit->mask);
+    m_client->keyDown(hit->id, hit->mask, button, lang);
+    return;
+  }
+
   KeyID id2 = translateKey(static_cast<KeyID>(id));
   KeyModifierMask mask2 = translateModifierMask(static_cast<KeyModifierMask>(mask));
   if (id2 != static_cast<KeyID>(id) || mask2 != static_cast<KeyModifierMask>(mask))
@@ -589,6 +598,11 @@ void ServerProxy::keyDown(uint16_t id, uint16_t mask, uint16_t button, const std
 void ServerProxy::keyRepeat(uint16_t id, uint16_t mask, uint16_t count, uint16_t button, const std::string &lang)
 {
   flushCompressedMouse();
+
+  if (const auto hit = m_shortcuts.match(static_cast<KeyID>(id), static_cast<KeyModifierMask>(mask))) {
+    m_client->keyRepeat(hit->id, hit->mask, count, button, lang);
+    return;
+  }
 
   KeyID id2 = translateKey(static_cast<KeyID>(id));
   KeyModifierMask mask2 = translateModifierMask(static_cast<KeyModifierMask>(mask));

@@ -10,6 +10,8 @@ add_library(client STATIC
   ServerProxy.h
   ServerProxy1_7.cpp
   ServerProxy1_7.h
+  ShortcutMap.cpp
+  ShortcutMap.h
   ServerProxy1_8.cpp
   ServerProxy1_8.h
 )
