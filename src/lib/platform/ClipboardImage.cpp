@@ -19,12 +19,16 @@ constexpr uint32_t kBiAlphabitfields = 6;
 constexpr uint32_t kBmpFileHeaderSize = 14;
 constexpr uint32_t kInfoHeaderSize = 40;
 
-std::string encode(const QImage &image, const char *format)
+// Qt maps PNG quality 80 to zlib level 1: several times faster than the default level and
+// only slightly larger, which matters because conversion runs on the input thread.
+constexpr int kFastPngQuality = 80;
+
+std::string encode(const QImage &image, const char *format, int quality = -1)
 {
   QByteArray bytes;
   QBuffer buffer(&bytes);
   buffer.open(QIODevice::WriteOnly);
-  if (image.isNull() || !image.save(&buffer, format))
+  if (image.isNull() || !image.save(&buffer, format, quality))
     return {};
   return bytes.toStdString();
 }
@@ -77,7 +81,7 @@ std::string dibToPng(std::string_view dib)
   if (!image.loadFromData(bmp, "BMP"))
     return {};
 
-  return encode(image, "PNG");
+  return encode(image, "PNG", kFastPngQuality);
 }
 
 std::string pngToDib(std::string_view png)
