@@ -385,7 +385,10 @@ QVariant Settings::defaultValue(const QString &key)
     return 250;
 
   if (key == Server::ClipboardSize)
-    return 3; // 3 MiB
+    return 32; // MiB; PNG screenshots of a Retina display need more than the old 3
+
+  if (key == Core::ClipboardFileMappings || key == Core::ShortcutMappings)
+    return QStringList{};
 
   return QVariant();
 }

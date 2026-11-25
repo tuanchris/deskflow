@@ -8,6 +8,8 @@
 #include "deskflow/Computer.h"
 #include "base/IEventQueue.h"
 #include "base/Log.h"
+#include "deskflow/Clipboard.h"
+#include "deskflow/ClipboardFileList.h"
 #include "deskflow/IPlatformComputer.h"
 
 #include <QProcess>
@@ -206,7 +208,22 @@ void Computer::warpCursor(int32_t x, int32_t y)
 
 void Computer::setClipboard(ClipboardID id, const IClipboard *clipboard)
 {
-  m_computer->setClipboard(id, clipboard);
+  bool hasFiles = false;
+  if (clipboard != nullptr && clipboard->open(clipboard->getTime())) {
+    hasFiles = clipboard->has(IClipboard::Format::FileList);
+    clipboard->close();
+  }
+
+  if (!hasFiles) {
+    m_computer->setClipboard(id, clipboard);
+    return;
+  }
+
+  // Received file paths name the sender's disk; rewrite them to this machine's SMB view.
+  Clipboard mapped;
+  Clipboard::copy(&mapped, clipboard);
+  clipboard::applyFileMappings(mapped, clipboard::fileMappingRules(), clipboard::kTargetIsWindows);
+  m_computer->setClipboard(id, &mapped);
 }
 
 void Computer::grabClipboard(ClipboardID id)

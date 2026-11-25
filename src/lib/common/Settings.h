@@ -63,6 +63,8 @@ public:
     inline static const auto ComputerEnterCommand = QStringLiteral("core/enterCommand");
     inline static const auto EnableExitCommand = QStringLiteral("core/enableExitCommand");
     inline static const auto ComputerExitCommand = QStringLiteral("core/exitCommand");
+    inline static const auto ClipboardFileMappings = QStringLiteral("core/clipboardFileMappings");
+    inline static const auto ShortcutMappings = QStringLiteral("core/shortcutMappings");
   };
   struct Daemon
   {
@@ -296,6 +298,8 @@ private:
     , Core::Display
     , Core::UseHooks
     , Core::Language
+    , Core::ClipboardFileMappings
+    , Core::ShortcutMappings
     , Daemon::ConfigFile
     , Daemon::Elevate
     , Daemon::LogFile
