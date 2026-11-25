@@ -79,6 +79,83 @@ This section contains general options it will begin with `[core]`
 | enterCommand  | command | A command to run when the computer is entered. |
 | enableExitCommand | `true` or `false` | Should the exit command be triggered when the computer is exited [defaut: false] |
 | exitCommand  | command | A command to run when the computer is exited. |
+| clipboardFileMappings | list of `source\|target` | Where files copied on another computer can be reached from this one, normally over SMB. See [Copying files and images](#copying-files-and-images) [default: empty, file copying off] |
+| shortcutMappings | list of `from\|to` | Shortcuts to translate while the cursor is on this computer. See [Shortcut mappings](#shortcut-mappings) [default: empty] |
+
+#### Copying files and images
+
+Copied images are shared as PNG. A macOS screenshot (Cmd+Ctrl+Shift+4) can be pasted on Windows, and a
+Windows screenshot (Win+Shift+S) can be pasted on macOS. Windows also gets a `CF_DIB` copy, for apps such as
+Paint. Images are no longer exchanged with computers running a Deskflow build without PNG support. Text and
+HTML still are.
+
+Files are not sent over the Deskflow connection. When you copy files in Finder or Explorer, Deskflow sends
+their paths. The computer you paste on rewrites each path to where that folder is shared over SMB, and Finder
+or Explorer then copies the files over the network as usual. Folders work, and so does any file size.
+
+Each computer that receives files needs `clipboardFileMappings` in its own `[core]` section. Each entry is
+`sourcePrefix|targetPrefix`:
+
+- `sourcePrefix` is a folder as the other computer names it.
+- `targetPrefix` is where this computer reaches that folder.
+- Use forward slashes everywhere, so write a Windows network path as `//host/share`. Deskflow converts the
+  slashes for the local system.
+- The longest matching prefix wins.
+- Windows prefixes (`C:/...`, `//host/...`) match case-insensitively.
+- Copied files outside every mapping are skipped, and a warning is logged.
+
+On the Windows PC, for files copied on a Mac:
+
+```ini
+[core]
+clipboardFileMappings=/Users/me|//my-mac.local/me, /Volumes/SSD|//my-mac.local/SSD
+```
+
+On the Mac, for files copied on the Windows PC (the share is mounted at `/Volumes/me`):
+
+```ini
+[core]
+clipboardFileMappings=C:/Users/me|/Volumes/me
+```
+
+One-time SMB setup:
+
+1. macOS: System Settings → General → Sharing → File Sharing. Share the folders you copy from, such as your
+   home folder or an external drive, and give access to your user only.
+2. Windows: share the folders you copy from, such as `C:\Users\<you>`, with your account only.
+3. Windows: save the Mac login so Explorer never prompts: `cmdkey /add:<mac-host>.local /user:<mac-user> /pass`.
+4. macOS: connect to `smb://<pc-host>/<share>` once in Finder (Go → Connect to Server), then add the mounted
+   share to System Settings → General → Login Items, so it is mounted at `/Volumes/<share>` after every login.
+
+> [!WARNING]
+> File Sharing serves the shared folders to every network the Mac joins. Use a strong account password, and
+> turn File Sharing off on networks you don't trust, such as public Wi-Fi.
+
+#### Shortcut mappings
+
+`shortcutMappings` goes in the `[core]` section of the computer that **receives** the keys (the client).
+Each entry is `from|to`:
+
+- `from` is the shortcut as pressed on the server's keyboard, before any modifier remapping. A Mac's Command
+  key is `super` and its Option key is `alt`.
+- `to` is what this computer should get instead, written in its own terms.
+- Key names are the same as for `keystroke(...)` in the server config (see [Keynames](#keynames)).
+- Letters match regardless of Shift.
+
+For a Mac server and a Windows client:
+
+```ini
+[core]
+shortcutMappings=super+q|alt+F4, super+Left|Home, super+Right|End, alt+Left|control+Left, alt+Right|control+Right, alt+BackSpace|control+BackSpace
+```
+
+Limitations:
+
+- One shortcut maps to one shortcut. Key sequences aren't supported.
+- Cmd+Tab → Alt+Tab probably won't keep the Windows task switcher open, because modifiers are restored right
+  after the key is sent.
+- macOS may catch some system shortcuts (Cmd+Tab, Cmd+Space, Cmd+Shift+3/4) before Deskflow can forward
+  them.
 
 ### Daemon
 
@@ -137,7 +214,7 @@ This section contains options used when in server mode it will begin with `[serv
 
 |Option              |    Valid Values   |Description|
 |:-------------------|:-----------------:|:-----------|
-| clipboardSize      | int > 0           | Deskflow will send a maximum of `N` megabytes of clipboard data to another computer when the mouse transitions to that computer. Clients use the server's value for both sending and receiving.|
+| clipboardSize      | int > 0           | Deskflow will send a maximum of `N` megabytes of clipboard data to another computer when the mouse transitions to that computer. Clients use the server's value for both sending and receiving. [default: 32]|
 | defaultLockToComputerState| `true` or `false` | When this is true the cursor is locked to the new computer when switching (default: false)|
 | disableLockToComputer| `true` or `false` | If false pressing scroll lock will toggle your cursor to be locked to current computer. (default: false) |
 | enableClipboard    | `true` or `false` | When `true` the clipboard will be shared with all clients If set to ''true'' then clipboard shared and the ''clipboardSharingSize'' setting will be used. If set to false, then clipboard sharing will be disabled and the the ''clipboardSharingSize'' setting will be ignored.|

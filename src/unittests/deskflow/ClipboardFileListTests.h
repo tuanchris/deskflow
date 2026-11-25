@@ -23,6 +23,7 @@ private Q_SLOTS:
   void map_badRule_skipped();
   void applyFileMappings_noMatch_keepsOtherFormats();
   void applyFileMappings_rewritesPayload();
+  void fileMappingRules_readsDocumentedIniList();
 
 private:
   Log m_log;

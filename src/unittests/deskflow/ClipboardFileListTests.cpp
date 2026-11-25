@@ -6,8 +6,12 @@
 
 #include "ClipboardFileListTests.h"
 
+#include "common/Settings.h"
 #include "deskflow/Clipboard.h"
 #include "deskflow/ClipboardFileList.h"
+
+#include <QFile>
+#include <QTemporaryDir>
 
 using namespace deskflow::clipboard;
 using Paths = std::vector<std::string>;
@@ -92,6 +96,21 @@ void ClipboardFileListTests::applyFileMappings_rewritesPayload()
   clipboard.open(0);
   QCOMPARE(clipboard.get(IClipboard::Format::FileList), joinFileList({"\\\\m\\t\\a"}));
   clipboard.close();
+}
+
+void ClipboardFileListTests::fileMappingRules_readsDocumentedIniList()
+{
+  // The exact line docs/Configuration.md tells users to write.
+  QTemporaryDir dir;
+  QVERIFY(dir.isValid());
+  const auto path = dir.filePath(QStringLiteral("Deskflow.conf"));
+  QFile file(path);
+  QVERIFY(file.open(QIODevice::WriteOnly | QIODevice::Text));
+  file.write("[core]\nclipboardFileMappings=/Users/me|//my-mac.local/me, /Volumes/SSD|//my-mac.local/SSD\n");
+  file.close();
+
+  Settings::setSettingsFile(path);
+  QCOMPARE(fileMappingRules(), QStringList({"/Users/me|//my-mac.local/me", "/Volumes/SSD|//my-mac.local/SSD"}));
 }
 
 QTEST_MAIN(ClipboardFileListTests)
