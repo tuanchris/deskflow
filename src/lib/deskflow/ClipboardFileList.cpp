@@ -35,7 +35,8 @@ QString normalise(QString path)
 // "C:/..." or "//host/share": Windows paths compare case-insensitively.
 bool isWindowsPath(const QString &path)
 {
-  return (path.size() >= 2 && path[0].isLetter() && path[1] == QLatin1Char(':')) || path.startsWith(QStringLiteral("//"));
+  return (path.size() >= 2 && path[0].isLetter() && path[1] == QLatin1Char(':')) ||
+         path.startsWith(QStringLiteral("//"));
 }
 
 std::vector<Rule> parseRules(const QStringList &rules)
@@ -67,8 +68,8 @@ mapFilePaths(const std::vector<std::string> &paths, const QStringList &rules, bo
 
     const Rule *best = nullptr;
     for (const auto &rule : parsed) {
-      const bool matches = source.compare(rule.from, rule.cs) == 0 ||
-                           source.startsWith(rule.from + QLatin1Char('/'), rule.cs);
+      const bool matches =
+          source.compare(rule.from, rule.cs) == 0 || source.startsWith(rule.from + QLatin1Char('/'), rule.cs);
       if (matches && (best == nullptr || rule.from.size() > best->from.size()))
         best = &rule;
     }

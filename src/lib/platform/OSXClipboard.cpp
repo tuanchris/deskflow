@@ -282,7 +282,8 @@ std::string OSXClipboard::getFileList() const
       continue;
     }
 
-    CFURLRef url = CFURLCreateWithBytes(nullptr, CFDataGetBytePtr(data), CFDataGetLength(data), kCFStringEncodingUTF8, nullptr);
+    CFURLRef url =
+        CFURLCreateWithBytes(nullptr, CFDataGetBytePtr(data), CFDataGetLength(data), kCFStringEncodingUTF8, nullptr);
     CFRelease(data);
     if (url == nullptr)
       continue;

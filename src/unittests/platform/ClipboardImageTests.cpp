@@ -16,7 +16,9 @@ using namespace deskflow::clipboard;
 
 namespace {
 
-const QRgb kPixels[2][3] = {{qRgb(255, 0, 0), qRgb(0, 255, 0), qRgb(0, 0, 255)}, {qRgb(10, 20, 30), qRgb(255, 255, 255), qRgb(0, 0, 0)}};
+const QRgb kPixels[2][3] = {
+    {qRgb(255, 0, 0), qRgb(0, 255, 0), qRgb(0, 0, 255)}, {qRgb(10, 20, 30), qRgb(255, 255, 255), qRgb(0, 0, 0)}
+};
 
 QImage expectedImage()
 {
