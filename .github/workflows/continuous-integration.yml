@@ -5,6 +5,7 @@
 name: Continuous Integration
 
 on:
+  workflow_dispatch: # fork-only: start builds of any branch from the Actions tab
   push:
     branches: [master]
     tags:
