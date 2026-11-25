@@ -187,7 +187,14 @@ elseif(UNIX)
 endif()
 
 # wayland.h is included to check for wayland support
+list(APPEND PLATFORM_SOURCES ClipboardImage.cpp ClipboardImage.h)
+
 add_library(platform STATIC ${PLATFORM_SOURCES})
+
+if(WIN32 OR APPLE)
+  # QImage for clipboard PNG conversion (Linux links Qt6::Gui below).
+  target_link_libraries(platform PRIVATE Qt6::Gui)
+endif()
 
 target_link_libraries(platform PUBLIC client ${libs})
 

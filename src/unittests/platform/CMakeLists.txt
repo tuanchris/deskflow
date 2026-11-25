@@ -53,3 +53,11 @@ elseif(UNIX)
     )
   endif()
 endif()
+
+create_test(
+  NAME ClipboardImageTests
+  DEPENDS platform
+  LIBS base arch Qt6::Gui
+  SOURCE ClipboardImageTests.cpp
+  WORKING_DIRECTORY "${CMAKE_BINARY_DIR}/src/lib/platform"
+)
