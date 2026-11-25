@@ -230,4 +230,29 @@ void ClipboardTests::equalClipboards()
   clipboard2.close();
 }
 
+void ClipboardTests::marshall_fileListAndPng_roundTrips()
+{
+  const std::string fileList("/a b\0/c", 7);
+  const std::string png("\x89PNG\r\n\x1a\n", 8);
+
+  Clipboard source;
+  source.open(0);
+  source.empty();
+  source.add(IClipboard::Format::Text, "x");
+  source.add(IClipboard::Format::FileList, fileList);
+  source.add(IClipboard::Format::PNG, png);
+  source.close();
+
+  Clipboard target;
+  target.unmarshall(source.marshall(), 0);
+
+  target.open(0);
+  QVERIFY(target.has(IClipboard::Format::FileList));
+  QVERIFY(target.has(IClipboard::Format::PNG));
+  QCOMPARE(target.get(IClipboard::Format::Text), std::string("x"));
+  QCOMPARE(target.get(IClipboard::Format::FileList), fileList);
+  QCOMPARE(target.get(IClipboard::Format::PNG), png);
+  target.close();
+}
+
 QTEST_MAIN(ClipboardTests)
