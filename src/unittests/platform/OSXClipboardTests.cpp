@@ -63,7 +63,7 @@ void OSXClipboardTests::fileList_addThenGet_roundTrips()
   const std::vector<std::string> paths = {
       (base + QStringLiteral("/a file.txt")).toStdString(),
       (base + QString::fromUtf8("/r\xc3\xa9sum\xc3\xa9.pdf")).toStdString(),
-      (base + QStringLiteral("/folder")).toStdString(),
+      (base + QStringLiteral("/folder/")).toStdString(),
   };
 
   OSXClipboard clipboard;
@@ -105,6 +105,19 @@ void OSXClipboardTests::text_unaffectedByFileList()
   clipboard.add(FileList, joinFileList(paths));
   QVERIFY(clipboard.has(Text));
   QCOMPARE(clipboard.get(Text), m_testString);
+  QCOMPARE(splitFileList(clipboard.get(FileList)), paths);
+}
+
+void OSXClipboardTests::fileList_folderMarker_withoutStat()
+{
+  using enum IClipboard::Format;
+
+  // Paths that do not exist here (an unmounted share): the folder marker alone decides.
+  const std::vector<std::string> paths = {"/Volumes/not-mounted/dir/", "/Volumes/not-mounted/file.txt"};
+
+  OSXClipboard clipboard;
+  QVERIFY(clipboard.empty());
+  clipboard.add(FileList, joinFileList(paths));
   QCOMPARE(splitFileList(clipboard.get(FileList)), paths);
 }
 

@@ -15,7 +15,9 @@
 #include "platform/ClipboardImage.h"
 
 #include <QBuffer>
+#include <QDir>
 #include <QImage>
+#include <QTemporaryDir>
 
 #include <QtEndian>
 
@@ -228,6 +230,21 @@ void MSWindowsClipboardTests::fileList_roundTrip()
 
   QVERIFY(clipboard.has(IClipboard::Format::FileList));
   QCOMPARE(deskflow::clipboard::splitFileList(clipboard.get(IClipboard::Format::FileList)), paths);
+  clipboard.close();
+}
+
+void MSWindowsClipboardTests::fileList_folder_getsTrailingBackslash()
+{
+  QTemporaryDir dir;
+  QVERIFY(dir.isValid());
+  const auto folder = QDir::toNativeSeparators(dir.path()).toStdString() + "\\";
+
+  MSWindowsClipboard clipboard(NULL);
+  QVERIFY(clipboard.open(0));
+  QVERIFY(clipboard.empty());
+  clipboard.add(IClipboard::Format::FileList, deskflow::clipboard::joinFileList({folder}));
+
+  QCOMPARE(deskflow::clipboard::splitFileList(clipboard.get(IClipboard::Format::FileList)), std::vector{folder});
   clipboard.close();
 }
 

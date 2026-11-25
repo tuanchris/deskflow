@@ -21,6 +21,7 @@ private Q_SLOTS:
   void map_windowsToMac_caseInsensitive();
   void map_trailingSlashInRule_ignored();
   void map_badRule_skipped();
+  void map_folderMarker_preserved();
   void applyFileMappings_noMatch_keepsOtherFormats();
   void applyFileMappings_rewritesPayload();
   void fileMappingRules_readsDocumentedIniList();

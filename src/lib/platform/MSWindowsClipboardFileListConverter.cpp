@@ -24,7 +24,10 @@ HANDLE MSWindowsClipboardFileListConverter::fromIClipboard(const std::string &pa
   // DROPFILES header, then each path NUL-terminated, then a final NUL.
   std::wstring list;
   for (const auto &path : paths) {
-    list += QString::fromStdString(path).toStdWString();
+    auto native = QString::fromStdString(path);
+    while (native.size() > 1 && (native.endsWith(QLatin1Char('\\')) || native.endsWith(QLatin1Char('/'))))
+      native.chop(1); // drop the folder marker: Explorer wants plain paths
+    list += native.toStdWString();
     list.push_back(L'\0');
   }
   list.push_back(L'\0');
@@ -57,6 +60,9 @@ std::string MSWindowsClipboardFileListConverter::toIClipboard(HANDLE data) const
     std::wstring path(length + 1, L'\0');
     DragQueryFileW(drop, i, path.data(), length + 1);
     path.resize(length);
+    const DWORD attributes = GetFileAttributesW(path.c_str()); // local disk: cheap
+    if (attributes != INVALID_FILE_ATTRIBUTES && (attributes & FILE_ATTRIBUTE_DIRECTORY) && path.back() != L'\\')
+      path.push_back(L'\\');
     paths.push_back(QString::fromStdWString(path).toStdString());
   }
   return deskflow::clipboard::joinFileList(paths);

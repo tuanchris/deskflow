@@ -18,6 +18,7 @@ private Q_SLOTS:
   void fileList_addThenGet_roundTrips();
   void png_addThenGet_passthrough();
   void text_unaffectedByFileList();
+  void fileList_folderMarker_withoutStat();
 
 private:
   Log m_log;

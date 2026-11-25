@@ -31,6 +31,7 @@ private Q_SLOTS:
   void normalisesMalformedMacBitmap();
   void preservesHealthyMacV5Bitmap();
   void fileList_roundTrip();
+  void fileList_folder_getsTrailingBackslash();
   void png_writesBothPngAndDib();
   void dibOnly_getPng_transcodes();
 

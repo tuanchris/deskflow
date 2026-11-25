@@ -17,7 +17,6 @@
 #include "platform/OSXClipboardUTF8Converter.h"
 
 #include <cstring>
-#include <sys/stat.h>
 
 //
 // OSXClipboard
@@ -296,6 +295,8 @@ std::string OSXClipboard::getFileList() const
       CFMutableStringRef composed = CFStringCreateMutableCopy(nullptr, 0, path);
       CFStringNormalize(composed, kCFStringNormalizationFormC);
       paths.push_back(toUtf8(composed));
+      if (CFURLHasDirectoryPath(pathUrl != nullptr ? pathUrl : url) && !deskflow::clipboard::isFolder(paths.back()))
+        paths.back() += '/';
       CFRelease(composed);
       CFRelease(path);
     }
@@ -311,8 +312,8 @@ void OSXClipboard::addFileList(const std::string &payload)
 {
   const auto paths = deskflow::clipboard::splitFileList(payload);
   for (size_t i = 0; i < paths.size(); ++i) {
-    struct stat info{};
-    const bool isDirectory = stat(paths[i].c_str(), &info) == 0 && S_ISDIR(info.st_mode);
+    // The sender marks folders; never stat here, the path is usually on an SMB share.
+    const bool isDirectory = deskflow::clipboard::isFolder(paths[i]);
 
     CFStringRef path = CFStringCreateWithCString(nullptr, paths[i].c_str(), kCFStringEncodingUTF8);
     if (path == nullptr)

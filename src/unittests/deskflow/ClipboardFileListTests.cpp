@@ -71,6 +71,14 @@ void ClipboardFileListTests::map_badRule_skipped()
   QVERIFY(mapFilePaths({"/Users/me/a"}, {"no-separator", "|", "/Users/me|"}, true).empty());
 }
 
+void ClipboardFileListTests::map_folderMarker_preserved()
+{
+  // A trailing separator marks a folder so the receiver never has to stat it over SMB.
+  QCOMPARE(mapFilePaths({"/Users/me/folder/"}, {"/Users/me|//m/t"}, true), Paths{"\\\\m\\t\\folder\\"});
+  QCOMPARE(mapFilePaths({"C:\\Users\\me\\dir\\"}, {"C:/Users/me|/Volumes/me"}, false), Paths{"/Volumes/me/dir/"});
+  QCOMPARE(mapFilePaths({"/Users/me/file"}, {"/Users/me|//m/t"}, true), Paths{"\\\\m\\t\\file"});
+}
+
 void ClipboardFileListTests::applyFileMappings_noMatch_keepsOtherFormats()
 {
   Clipboard clipboard;

@@ -14,7 +14,7 @@
 
 class Clipboard;
 
-//! Helpers for IClipboard::Format::FileList: NUL-separated absolute paths.
+//! Helpers for IClipboard::Format::FileList: NUL-separated absolute paths; folders end in a separator.
 //!
 //! Files are not transferred. The receiving machine rewrites each path to where the
 //! source folder is reachable over SMB (core/clipboardFileMappings), and the OS file
@@ -40,6 +40,12 @@ inline std::vector<std::string> splitFileList(std::string_view payload)
     start = end + 1;
   }
   return paths;
+}
+
+//! A trailing separator marks a folder, so a receiver never has to stat a path over SMB.
+inline bool isFolder(std::string_view path)
+{
+  return !path.empty() && (path.back() == '/' || path.back() == '\\');
 }
 
 inline std::string joinFileList(const std::vector<std::string> &paths)

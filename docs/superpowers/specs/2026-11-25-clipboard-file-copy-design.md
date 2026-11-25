@@ -67,7 +67,8 @@ Chosen by the owner: **A**. They had already offered to set up SMB.
 
 - Add `IClipboard::Format::FileList` (value 3) before `TotalFormats`.
 - Payload: absolute paths as the source OS spells them, UTF-8, separated by `\0` (NUL cannot appear in a
-  path on either OS). Example from the Mac: `/Users/me/a.pdf\0/Users/me/Photos`.
+  path on either OS). A folder ends with a trailing separator (`/` or `\`), which the sender sets locally, so the
+  receiver never has to `stat` a path over SMB. (Added after the final review.) Example from the Mac: `/Users/me/a.pdf\0/Users/me/Photos`.
 - Update the fixed-size array initialisers that list one value per format (`Clipboard.h`,
   `EiClipboard.h`) and the format logging in `OSXClipboard::add`.
 

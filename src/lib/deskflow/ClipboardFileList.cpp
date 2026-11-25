@@ -80,6 +80,8 @@ mapFilePaths(const std::vector<std::string> &paths, const QStringList &rules, bo
     }
 
     auto target = best->to + source.mid(best->from.size());
+    if (isFolder(path))
+      target += QLatin1Char('/');
     if (targetIsWindows)
       target.replace(QLatin1Char('/'), QLatin1Char('\\'));
     mapped.push_back(target.toStdString());
