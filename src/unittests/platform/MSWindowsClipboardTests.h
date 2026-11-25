@@ -30,6 +30,9 @@ private Q_SLOTS:
   void isOwnedByDeskflow();
   void normalisesMalformedMacBitmap();
   void preservesHealthyMacV5Bitmap();
+  void fileList_roundTrip();
+  void png_writesBothPngAndDib();
+  void dibOnly_getPng_transcodes();
 
 private:
   Log m_log;

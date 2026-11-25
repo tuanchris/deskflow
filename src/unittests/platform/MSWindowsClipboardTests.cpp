@@ -11,6 +11,12 @@
 #include "platform/MSWindowsClipboard.h"
 #include "platform/MSWindowsClipboardBitmapConverter.h"
 
+#include "deskflow/ClipboardFileList.h"
+#include "platform/ClipboardImage.h"
+
+#include <QBuffer>
+#include <QImage>
+
 #include <QtEndian>
 
 void MSWindowsClipboardTests::initTestCase()
@@ -198,4 +204,66 @@ void MSWindowsClipboardTests::preservesHealthyMacV5Bitmap()
   GlobalFree(handle);
 }
 
-QTEST_MAIN(MSWindowsClipboardTests)
+namespace {
+std::string twoByTwoPng()
+{
+  QImage image(2, 2, QImage::Format_RGB32);
+  image.fill(qRgb(1, 2, 3));
+  QByteArray bytes;
+  QBuffer buffer(&bytes);
+  buffer.open(QIODevice::WriteOnly);
+  image.save(&buffer, "PNG");
+  return bytes.toStdString();
+}
+} // namespace
+
+void MSWindowsClipboardTests::fileList_roundTrip()
+{
+  const std::vector<std::string> paths = {"C:\\Temp\\a b.txt", "C:\\Temp\\r\xc3\xa9sum\xc3\xa9"};
+
+  MSWindowsClipboard clipboard(NULL);
+  QVERIFY(clipboard.open(0));
+  QVERIFY(clipboard.empty());
+  clipboard.add(IClipboard::Format::FileList, deskflow::clipboard::joinFileList(paths));
+
+  QVERIFY(clipboard.has(IClipboard::Format::FileList));
+  QCOMPARE(deskflow::clipboard::splitFileList(clipboard.get(IClipboard::Format::FileList)), paths);
+  clipboard.close();
+}
+
+void MSWindowsClipboardTests::png_writesBothPngAndDib()
+{
+  const auto png = twoByTwoPng();
+
+  MSWindowsClipboard clipboard(NULL);
+  QVERIFY(clipboard.open(0));
+  QVERIFY(clipboard.empty());
+  clipboard.add(IClipboard::Format::PNG, png);
+
+  QVERIFY(IsClipboardFormatAvailable(CF_DIB));
+  QVERIFY(IsClipboardFormatAvailable(RegisterClipboardFormatW(L"PNG")));
+  QCOMPARE(clipboard.get(IClipboard::Format::PNG), png); // the PNG passthrough wins over CF_DIB
+  clipboard.close();
+}
+
+void MSWindowsClipboardTests::dibOnly_getPng_transcodes()
+{
+  MSWindowsClipboardBitmapConverter bitmap;
+  const auto handle = bitmap.fromIClipboard(deskflow::clipboard::pngToDib(twoByTwoPng()));
+  QVERIFY(handle != nullptr);
+
+  MSWindowsClipboard clipboard(NULL);
+  QVERIFY(clipboard.open(0));
+  QVERIFY(clipboard.empty());
+  QVERIFY(SetClipboardData(CF_DIB, handle) != nullptr);
+
+  QVERIFY(clipboard.has(IClipboard::Format::PNG));
+  QImage decoded;
+  QVERIFY(decoded.loadFromData(QByteArray::fromStdString(clipboard.get(IClipboard::Format::PNG)), "PNG"));
+  QCOMPARE(decoded.size(), QSize(2, 2));
+  QCOMPARE(decoded.pixel(0, 0) & 0xffffff, qRgb(1, 2, 3) & 0xffffff);
+  clipboard.close();
+}
+
+// GUI-less: linking Qt6::Gui for QImage would otherwise make QTEST_MAIN start a QGuiApplication.
+QTEST_GUILESS_MAIN(MSWindowsClipboardTests)

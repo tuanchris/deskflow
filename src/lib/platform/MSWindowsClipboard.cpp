@@ -9,9 +9,10 @@
 #include "platform/MSWindowsClipboard.h"
 
 #include "base/Log.h"
-#include "platform/MSWindowsClipboardBitmapConverter.h"
 #include "platform/MSWindowsClipboardFacade.h"
+#include "platform/MSWindowsClipboardFileListConverter.h"
 #include "platform/MSWindowsClipboardHTMLConverter.h"
+#include "platform/MSWindowsClipboardPNGConverter.h"
 #include "platform/MSWindowsClipboardUTF16Converter.h"
 
 //
@@ -28,8 +29,11 @@ MSWindowsClipboard::MSWindowsClipboard(HWND window)
 {
   // add converters, most desired first
   m_converters.push_back(new MSWindowsClipboardUTF16Converter);
-  m_converters.push_back(new MSWindowsClipboardBitmapConverter);
   m_converters.push_back(new MSWindowsClipboardHTMLConverter);
+  m_converters.push_back(new MSWindowsClipboardFileListConverter);
+  // PNG: native "PNG" first so get() prefers it; CF_DIB second for DIB-only apps.
+  m_converters.push_back(new MSWindowsClipboardPNGConverter);
+  m_converters.push_back(new MSWindowsClipboardDIBPNGConverter);
 }
 
 MSWindowsClipboard::~MSWindowsClipboard()
@@ -100,8 +104,7 @@ void MSWindowsClipboard::add(Format format, const std::string &data)
       if (win32Data != nullptr) {
         LOG_DEBUG("add %d bytes to clipboard format: %d", data.size(), format);
         m_facade->write(win32Data, converter->getWin32Format());
-        isSucceeded = true;
-        break;
+        isSucceeded = true; // keep going: a format may have several Win32 forms (PNG + CF_DIB)
       } else {
         LOG_DEBUG("failed to convert clipboard data to platform format");
       }
@@ -172,7 +175,7 @@ std::string MSWindowsClipboard::get(Format format) const
   for (ConverterList::const_iterator index = m_converters.begin(); index != m_converters.end(); ++index) {
 
     converter = *index;
-    if (converter->getFormat() == format) {
+    if (converter->getFormat() == format && IsClipboardFormatAvailable(converter->getWin32Format())) {
       break;
     }
     converter = nullptr;

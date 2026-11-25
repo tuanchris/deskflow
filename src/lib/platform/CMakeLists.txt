@@ -42,8 +42,11 @@ if(WIN32)
     MSWindowsClipboardBitmapConverter.h
     MSWindowsClipboardFacade.cpp
     MSWindowsClipboardFacade.h
+    MSWindowsClipboardFileListConverter.cpp
+    MSWindowsClipboardFileListConverter.h
     MSWindowsClipboardHTMLConverter.cpp
     MSWindowsClipboardHTMLConverter.h
+    MSWindowsClipboardPNGConverter.h
     MSWindowsClipboardUTF16Converter.cpp
     MSWindowsClipboardUTF16Converter.h
     MSWindowsComputer.cpp
@@ -195,6 +198,9 @@ add_library(platform STATIC ${PLATFORM_SOURCES})
 if(WIN32 OR APPLE)
   # QImage for clipboard PNG conversion (Linux links Qt6::Gui below).
   target_link_libraries(platform PRIVATE Qt6::Gui)
+endif()
+if(WIN32)
+  target_link_libraries(platform PRIVATE Shell32) # DragQueryFileW
 endif()
 
 target_link_libraries(platform PUBLIC client ${libs})
