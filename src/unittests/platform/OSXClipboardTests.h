@@ -15,6 +15,9 @@ private Q_SLOTS:
   void open();
   void singleFormat();
   void formatConvert_UTF8();
+  void fileList_addThenGet_roundTrips();
+  void png_addThenGet_passthrough();
+  void text_unaffectedByFileList();
 
 private:
   Log m_log;

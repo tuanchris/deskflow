@@ -11,6 +11,15 @@
 #include "platform/OSXClipboard.h"
 #include "platform/OSXClipboardUTF8Converter.h"
 
+#include "deskflow/ClipboardFileList.h"
+
+#include <QDir>
+#include <QFile>
+#include <QTemporaryDir>
+
+using deskflow::clipboard::joinFileList;
+using deskflow::clipboard::splitFileList;
+
 void OSXClipboardTests::open()
 {
   OSXClipboard clipboard;
@@ -37,6 +46,66 @@ void OSXClipboardTests::formatConvert_UTF8()
   QCOMPARE(converter.getOSXFormat(), CFSTR("public.utf8-plain-text"));
   QCOMPARE(converter.fromIClipboard("test data\n"), "test data\r");
   QCOMPARE(converter.toIClipboard("test data\r"), "test data\n");
+}
+
+void OSXClipboardTests::fileList_addThenGet_roundTrips()
+{
+  using enum IClipboard::Format;
+
+  QTemporaryDir dir;
+  QVERIFY(dir.isValid());
+  const auto base = dir.path();
+  for (const auto &name : {QStringLiteral("a file.txt"), QString::fromUtf8("r\xc3\xa9sum\xc3\xa9.pdf")}) {
+    QFile file(base + QLatin1Char('/') + name);
+    QVERIFY(file.open(QIODevice::WriteOnly));
+  }
+  QVERIFY(QDir(base).mkdir(QStringLiteral("folder")));
+  const std::vector<std::string> paths = {
+      (base + QStringLiteral("/a file.txt")).toStdString(),
+      (base + QString::fromUtf8("/r\xc3\xa9sum\xc3\xa9.pdf")).toStdString(),
+      (base + QStringLiteral("/folder")).toStdString(),
+  };
+
+  OSXClipboard clipboard;
+  QVERIFY(clipboard.open(0));
+  QVERIFY(clipboard.empty());
+  clipboard.add(FileList, joinFileList(paths));
+  clipboard.close();
+
+  QVERIFY(clipboard.open(0));
+  QVERIFY(clipboard.has(FileList));
+  QCOMPARE(splitFileList(clipboard.get(FileList)), paths);
+  clipboard.close();
+}
+
+void OSXClipboardTests::png_addThenGet_passthrough()
+{
+  using enum IClipboard::Format;
+  const std::string png = std::string("\x89PNG\r\n\x1a\n", 8) + "abcd";
+
+  OSXClipboard clipboard;
+  QVERIFY(clipboard.empty());
+  clipboard.add(PNG, png);
+  QVERIFY(clipboard.has(PNG));
+  QCOMPARE(clipboard.get(PNG), png);
+  QVERIFY(!clipboard.has(Bitmap));
+}
+
+void OSXClipboardTests::text_unaffectedByFileList()
+{
+  using enum IClipboard::Format;
+
+  QTemporaryDir dir;
+  QVERIFY(dir.isValid());
+  const std::vector<std::string> paths = {dir.path().toStdString()};
+
+  OSXClipboard clipboard;
+  QVERIFY(clipboard.empty());
+  clipboard.add(Text, m_testString);
+  clipboard.add(FileList, joinFileList(paths));
+  QVERIFY(clipboard.has(Text));
+  QCOMPARE(clipboard.get(Text), m_testString);
+  QCOMPARE(splitFileList(clipboard.get(FileList)), paths);
 }
 
 QTEST_MAIN(OSXClipboardTests)

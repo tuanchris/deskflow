@@ -38,6 +38,9 @@ public:
 
 private:
   void clearConverters();
+  bool hasFileList() const;
+  std::string getFileList() const;
+  void addFileList(const std::string &payload);
 
 private:
   using ConverterList = std::vector<IOSXClipboardConverter *>;
