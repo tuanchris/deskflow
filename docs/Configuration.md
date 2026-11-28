@@ -104,6 +104,10 @@ Each computer that receives files needs `clipboardFileMappings` in its own `[cor
 - Windows prefixes (`C:/...`, `//host/...`) match case-insensitively.
 - Copied files outside every mapping are skipped, and a warning is logged.
 
+On Windows, the portable build reads these settings from `settings\Deskflow.conf` next to `deskflow.exe`, so
+the examples below can be pasted as they are. An MSI install keeps its settings in the registry
+(`HKCU\Software\Deskflow\Deskflow`) instead.
+
 On the Windows PC, for files copied on a Mac:
 
 ```ini
